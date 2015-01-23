@@ -8,6 +8,11 @@ package com.jmw.image.NeuralNet;
 public class Sigmoid extends ActivationFunction
 {
 	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = -7777402599378025936L;
+
+	/**
 	 * Constructs new Sigmoid Activation Function
 	 */
 	public Sigmoid()
@@ -35,6 +40,12 @@ public class Sigmoid extends ActivationFunction
 		double derivative = output * (1d - output);
 		
 		return derivative;
+	}
+
+	@Override
+	public String getType()
+	{
+		return "Sigmoid";
 	}
 
 }

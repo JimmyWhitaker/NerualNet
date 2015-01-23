@@ -1,12 +1,24 @@
 package com.jmw.image.NeuralNet;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 /**
  * Fully Connected Neural Network
  * 
  * @author Jimmy Whitaker
  */
-public class NeuralNet
+public class NeuralNet implements Serializable
 { 
+	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = 2304156243561498598L;
+	
 	private int numLayers;
 	// TODO Add Mask for DropConnect
 	public Layer[] layers;
@@ -41,50 +53,46 @@ public class NeuralNet
 	/**
 	 * Train the neural network given the parameters.
 	 * 
-	 * This method uses vector based back propagation to learn.
+	 * This method uses vector based back propagation to learn one example
+	 * at a time. 
+	 * 
+	 * TODO Batch learning and batch updates
 	 * 
 	 * @param dataset 
 	 * @param epochs 
 	 * @param learningRate 
 	 * @param momentum
 	 */
-	public void train(Dataset dataset, int epochs, double learningRate, double momentum)
+	public void train(Dataset dataset, int epochs, int batchSize, double learningRate, double momentum)
 	{
+		int count = 0; //Track percentage computed
+		dataset.splitIntoBatches(batchSize);
+		
 		//Epoch iteration
-		int count = 0;
 		for(int e = 0; e < epochs; e++)
 		{
-			dataset.randomPerm(); // Randomizes the input dataset after each epoch
+			Dataset batch = dataset.getBatch(); // Get a batch of the data
+			batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
 			
-			/* Batch iteration - currently all of data is used for XOR problem
-			 * While this loop is redundant (erroneous), it results in less examples 
-			 * needed to achieve 100% accuracy, and thus decreases runtime 10%.
-			 * This is most likely an anomaly of the XOR dataset and weights. 
-			 */
-			for(int i = 0; i < dataset.getNumExamples(); i++)
+			//Training Batch iteration
+			for(int j = 0; j < dataset.getNumBatches(); j++)
 			{
-				Matx data = dataset.getData();
-				Matx labels = dataset.getLabels();
-				
-				//Training Example iteration
-				for(int j = 0; j < data.getRows(); j++)
-				{
-					Matx dataInput = data.getRow(j).getTranspose(); // TODO currently all of data not mini-batch.
-					Matx dataInputLabel = labels.getRow(j).getTranspose();
-					//Feed Forward
-					feedForward(dataInput);
-					//Back-propagate error deltas
-					backPropagate(dataInputLabel);
-					//Update Weights with error deltas
-					updateWeights(dataInput,learningRate);
-					count++;
-				}
+				Matx dataInput = batch.getData().getTranspose(); // TODO currently all of data not mini-batch.
+				Matx dataInputLabel = batch.getLabels().getTranspose();
+				//Feed Forward
+				feedForward(dataInput);
+				//Back-propagate error deltas
+				backPropagate(dataInputLabel);
+				//Update Weights with error deltas
+				updateWeights(dataInput,learningRate);
+				count++;
+				showTrainingPercentage(count, dataset.getNumBatches(),epochs);
 			}
 			learningRate *= momentum; // Controls the change in the learning rate between epochs
 		}
-		System.out.println(count);
+//		System.out.println(count);
 	}
-	
+
 	/**
 	 * Feeds a data example through the neural network resulting in a classification output.
 	 * Outputs of the hidden layers are stored in the layer objects of the network.
@@ -95,14 +103,14 @@ public class NeuralNet
 	private Matx feedForward(Matx dataInput)
 	{
 		Matx output = dataInput;
-		
+
 		for(int k = 0; k < numLayers; k++)
 		{
 			output = layers[k].computeLayerOutput(output); 
 		}
 		return output;
 	}
-	
+
 	/**
 	 * Compute the errors in the neural network according to outputs previously 
 	 * computed and the label for the data example.
@@ -120,7 +128,7 @@ public class NeuralNet
 			output_delta_error = layers[k].computeErrorDelta(output_delta_error, layers[k+1].getWeight());
 		}
 	}
-	
+
 	/**
 	 * Update the weights of the neural network according to the input example
 	 * and learning rate. 
@@ -152,54 +160,134 @@ public class NeuralNet
 	 */
 	public void test(Dataset dataset, boolean verbose)
 	{
-		System.out.println("Layer 1 Weights:");
-		System.out.println(layers[0].getWeight().toString());
-		System.out.println("Layer 2 Weights:");
-		System.out.println(layers[1].getWeight().toString());
-		
-		Matx data = dataset.getData();
+		Matx data = dataset.getData().getTranspose();
 		Matx labels = dataset.getLabels();
+		Matx output = feedForward(data).getTranspose();
 		
+		double threshold = 0.5;
 		int classification;
 		int label;
 		int numCorrect=0;
 		int numIncorrect=0;
+		
 		//Each Training Example iteration
-		for(int j = 0; j < data.getRows(); j++)
+		for(int i = 0; i < data.getRows(); i++)
 		{
-			Matx dataInput = data.getRow(j).getTranspose(); // TODO currently all of data not mini-batch.
-			Matx dataInputLabel = labels.getRow(j).getTranspose();
-			
-			Matx output = feedForward(dataInput);
-			
-			if(output.get(0, 0) > 0.5)
+			//If last layer is Softmax
+			if( layers[layers.length-1].getType().equals("Softmax") )
 			{
-				classification = 1;
-			}else{
-				classification = 0;
+				/**
+				 * Get the maximum of an output vector.
+				 * Find the location of the 1 in the label vector.
+				 * If the output vector contains the max at the 
+				 * same index, then it is a correct classification.
+				 */
+				double max = output.maxInRow(i);
+				for(int j = 0; j < labels.getCols(); j++)
+				{
+					if(labels.get(i, j) == 1.0) 
+					{
+						if(output.get(i, j) == max)
+						{
+							numCorrect++;
+						}else{
+							numIncorrect++;
+						}
+					}
+				}
 			}
-			
-			if(dataInputLabel.get(0, 0) > 0.5)
+			else //Last layer isn't softmax TODO allow for matrix implementation
 			{
-				label = 1;
-			}else{
-				label = 0;
+				if(output.get(0, 0) > threshold)
+				{
+					classification = 1;
+				}else{
+					classification = 0;
+				}
+
+				if(labels.get(0, 0) > threshold)
+				{
+					label = 1;
+				}else{
+					label = 0;
+				}
+
+
+				if(classification == label)
+				{
+					if(verbose) 
+						System.out.println(data.getRow(i).toString() + " " + output + " " + "correct.");
+					numCorrect++;
+				}else
+				{
+					if(verbose) 
+						System.out.println(data.getRow(i).toString() + " " + output + " " + "incorrect.");
+					numIncorrect++;
+				}
 			}
-			
-			if(classification == label)
-			{
-				if(verbose) 
-					System.out.println(data.getRow(j).toString() + " " + output + " " + "correct.");
-				numCorrect++;
-			}else
-			{
-				if(verbose) 
-					System.out.println(data.getRow(j).toString() + " " + output + " " + "incorrect.");
-				numIncorrect++;
-			}
-			
+
 		}
-		System.out.println("Accuracy: "+ ((double)numCorrect/(numCorrect+numIncorrect)*100.0) + "%");
+		System.out.println("Accuracy: "+ String.format("%.02f%%",((double)numCorrect/(numCorrect+numIncorrect)*100.0)));
+	}
+	
+	/**
+	 * Show the completed training percentage.
+	 * @param numCompleted
+	 * @param numBatches
+	 * @param epochs
+	 */
+	private static final void showTrainingPercentage(int numCompleted, int numBatches, int epochs)
+	{
+		double percentage = ( ((double)numCompleted) / (numBatches*epochs) *100);
+		System.out.println(String.format("%.02f%%",percentage) +'\r' );
+	}
+	
+	/**
+	 * Save a serialized version of the NeuralNet
+	 * 
+	 * @param filename name of ouput file typically ending with (.ser)
+	 */
+	public void save(String filename)
+	{
+		try
+		{
+			FileOutputStream fileOut = new FileOutputStream(filename);
+			ObjectOutputStream outStream = new ObjectOutputStream(fileOut);
+			outStream.writeObject(this);
+			outStream.close();
+			fileOut.close();
+		}catch(IOException i)
+		{
+			i.printStackTrace();
+		}
+	}
+	
+	public static NeuralNet load(String filename)
+	{
+		//Deserialize
+		System.out.println("************");
+		System.out.println("Deserializing");
+		NeuralNet nn = null;
+		try
+		{
+			FileInputStream fileIn =new FileInputStream(filename);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			nn = (NeuralNet) in.readObject();
+			in.close();
+			fileIn.close();
+		}catch(IOException i)
+		{
+			i.printStackTrace();
+			return null;
+		}catch(ClassNotFoundException c)
+		{
+			System.out.println("NeuralNet class not found.");
+			c.printStackTrace();
+			return null;
+		}
+		System.out.println("Done Deserializing.");
+		System.out.println("Number of Layers: " + nn.layers.length);
+		return nn;   
 	}
 
 }

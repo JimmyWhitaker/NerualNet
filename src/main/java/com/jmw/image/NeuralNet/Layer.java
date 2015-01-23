@@ -1,13 +1,20 @@
 package com.jmw.image.NeuralNet;
 
+import java.io.Serializable;
+
 /**
  * Neural Network Layer
  * 
  * @author Jimmy Whitaker
  *
  */
-public class Layer
+public class Layer implements Serializable
 {
+	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = 5215917274187351523L;
+	
 	private Matx weightedInput; // weight*layerInput
 	private Matx output;
 	public Matx weight;
@@ -35,11 +42,13 @@ public class Layer
 		}else if(activationFunction.equals("Relu"))
 		{
 			this.activationFunction = new Relu();
+		}else if(activationFunction.equals("Softmax"))
+		{
+			this.activationFunction = new Softmax();
 		}
 		
 		//Randomly initialize the weight Matx according to a normal distribution
 		this.weight = Matx.createRandNormMatx(numNeurons, numInputs);
-		
 	}
 	
 	/**
@@ -125,6 +134,16 @@ public class Layer
 	public Matx getOutput()
 	{
 		return this.output;
+	}
+	
+	public int getNumNeurons()
+	{
+		return weight.getRows();
+	}
+	
+	public String getType()
+	{
+		return activationFunction.getType();
 	}
 	
 }

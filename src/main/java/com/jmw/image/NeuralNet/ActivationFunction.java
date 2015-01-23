@@ -1,12 +1,19 @@
 package com.jmw.image.NeuralNet;
 
+import java.io.Serializable;
+
 /**
  * Activation Function used for a layer in a neural network.
  * 
  * @author Jimmy Whitaker
  */
-public abstract class ActivationFunction
+public abstract class ActivationFunction implements Serializable
 {
+	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = 1278259526115209405L;
+
 	/**
 	 * Computes an element-wise output of the activation function.
 	 * 
@@ -14,7 +21,7 @@ public abstract class ActivationFunction
 	 * @return computed output Matx
 	 */
 	// TODO make this more efficient
-	final public Matx getOutput(Matx matx) 
+	public Matx getOutput(Matx matx) 
 	{
 		Matx result = new Matx(matx); 
 		double net = 0;
@@ -68,4 +75,6 @@ public abstract class ActivationFunction
 	 * @return ouput value
 	 */
 	protected abstract double getDerivative(double net);
+
+	public abstract String getType();
 }

@@ -1,5 +1,6 @@
 package com.jmw.image.NeuralNet;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import org.la4j.matrix.Matrix;
@@ -10,9 +11,16 @@ import org.la4j.matrix.dense.Basic2DMatrix;
  * 
  * @author Jimmy Whitaker
  */
-public class Matx
+public class Matx implements Serializable
 {
+	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = -8584928737110933110L;
+
 	Basic2DMatrix matrix;
+	
+	//Random parameters
 	private static Random random = new Random(1192015); //TODO parameter for seed
 	// TODO make mean and st dev parameters
 	private static final double MEAN = 0;
@@ -45,6 +53,10 @@ public class Matx
 	 */
 	public Matx(Matx matx) {
 		this.matrix = (Basic2DMatrix) matx.matrix.copy();
+	}
+
+	public Matx(double[][] data) {
+		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -242,6 +254,34 @@ public class Matx
 	public void swapRows(int i, int j)
 	{
 		this.matrix.swapRows(i, j);
+	}
+	
+	/**
+	 * @return maximum value of a matrix
+	 */
+	public double max()
+	{
+		return matrix.max();
+	}
+
+	/**
+	 * 
+	 * @param j column number
+	 * @return maximum value of the column
+	 */
+	public double maxInColumn(int j)
+	{
+		return matrix.maxInColumn(j);
+	}
+
+	/**
+	 * 
+	 * @param i row number
+	 * @return maximum value of the row
+	 */
+	public double maxInRow(int i)
+	{
+		return matrix.maxInRow(i);
 	}
 	
 }

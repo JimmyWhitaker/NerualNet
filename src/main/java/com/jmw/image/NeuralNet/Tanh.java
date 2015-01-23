@@ -8,6 +8,11 @@ package com.jmw.image.NeuralNet;
 public class Tanh extends ActivationFunction
 {
 	/**
+	 * Determines if a de-serialized file is compatible with this class.
+	 */
+	private static final long serialVersionUID = -9163490316545429762L;
+
+	/**
 	 * Constructs new Tanh Activation Function
 	 */
 	public Tanh() {
@@ -31,6 +36,12 @@ public class Tanh extends ActivationFunction
 	{
 		double output = getOutput(net);
 		return (1.0 - output * output);
+	}
+
+	@Override
+	public String getType()
+	{
+		return "Tanh";
 	}	
 
 }
