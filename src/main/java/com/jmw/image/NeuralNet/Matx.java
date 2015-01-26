@@ -24,7 +24,7 @@ public class Matx implements Serializable
 	private static Random random = new Random(1192015); //TODO parameter for seed
 	// TODO make mean and st dev parameters
 	private static final double MEAN = 0;
-	private static final double STDDEV = 0.5;
+	private static final double STDDEV = 0.1;
 	
 	
 	/**
@@ -205,7 +205,7 @@ public class Matx implements Serializable
 	 */
 	public int getCols()
 	{
-		return this.matrix.columns();
+		return matrix.columns();
 	}
 
 	/**
@@ -213,7 +213,7 @@ public class Matx implements Serializable
 	 */
 	public int getRows()
 	{
-		return this.matrix.rows();
+		return matrix.rows();
 	}
 	
 	/**
@@ -222,7 +222,7 @@ public class Matx implements Serializable
 	@Override
 	public String toString()
 	{
-		return this.matrix.toString();
+		return matrix.toString();
 	}
 
 	/**
@@ -284,4 +284,9 @@ public class Matx implements Serializable
 		return matrix.maxInRow(i);
 	}
 	
+//	public Matx select(int startRow, int stopRow, int startCol, int stopCol)
+//	{
+//		matrix.select(rowIndices, columnIndices);
+//	}
+//	
 }

@@ -1,7 +1,6 @@
 package com.jmw.image.NeuralNet;
 
 import java.io.IOException;
-import java.util.Random;
 
 import mnist.MnistManager.MnistManager;
 
@@ -120,7 +119,7 @@ public class MnistDataset implements Dataset
 	}
 
 	/**
-	 * Returnd Matx of all Data.
+	 * Return Matx of all Data.
 	 */
 	public Matx getData()
 	{	

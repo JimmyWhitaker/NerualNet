@@ -56,28 +56,32 @@ public class NeuralNet implements Serializable
 	 * This method uses vector based back propagation to learn one example
 	 * at a time. 
 	 * 
-	 * TODO Batch learning and batch updates
-	 * 
 	 * @param dataset 
 	 * @param epochs 
 	 * @param learningRate 
 	 * @param momentum
 	 */
-	public void train(Dataset dataset, int epochs, int batchSize, double learningRate, double momentum)
+	
+	public void train(Dataset dataset, Dataset testset, int epochs, int batchSize, double learningRate, double momentum)
 	{
-		int count = 0; //Track percentage computed
+		//Import testing data
+		Matx testingData = testset.getData();
+		Matx testingLabels = testset.getLabels();
+		MatxDataset testDataset = new MatxDataset(testingData, testingLabels);
+		
 		dataset.splitIntoBatches(batchSize);
 		
 		//Epoch iteration
 		for(int e = 0; e < epochs; e++)
 		{
 			Dataset batch = dataset.getBatch(); // Get a batch of the data
+			
 			batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
 			
 			//Training Batch iteration
 			for(int j = 0; j < dataset.getNumBatches(); j++)
 			{
-				Matx dataInput = batch.getData().getTranspose(); // TODO currently all of data not mini-batch.
+				Matx dataInput = batch.getData().getTranspose();
 				Matx dataInputLabel = batch.getLabels().getTranspose();
 				//Feed Forward
 				feedForward(dataInput);
@@ -85,12 +89,16 @@ public class NeuralNet implements Serializable
 				backPropagate(dataInputLabel);
 				//Update Weights with error deltas
 				updateWeights(dataInput,learningRate);
-				count++;
-				showTrainingPercentage(count, dataset.getNumBatches(),epochs);
+//				showTrainingPercentage(count, dataset.getNumBatches(),epochs);
 			}
+			//Save Neural Network when testing accuracy is above a certain threshold (avoids over-training)
+			if(test(testingData,testingLabels,false)>90)
+			{
+				save("Mnist-90.ser");
+			}
+				
 			learningRate *= momentum; // Controls the change in the learning rate between epochs
 		}
-//		System.out.println(count);
 	}
 
 	/**
@@ -158,11 +166,11 @@ public class NeuralNet implements Serializable
 	 * @param dataset
 	 * @param verbose if true: presents more output to the terminal
 	 */
-	public void test(Dataset dataset, boolean verbose)
+	public double test(Matx data, Matx labels, boolean verbose) //TODO change back to Dataset paramenter instead of 2 Matxs
 	{
-		Matx data = dataset.getData().getTranspose();
-		Matx labels = dataset.getLabels();
-		Matx output = feedForward(data).getTranspose();
+//		Matx data = dataset.getData();
+//		Matx labels = dataset.getLabels();
+		Matx output = feedForward(data.getTranspose()).getTranspose();
 		
 		double threshold = 0.5;
 		int classification;
@@ -171,7 +179,7 @@ public class NeuralNet implements Serializable
 		int numIncorrect=0;
 		
 		//Each Training Example iteration
-		for(int i = 0; i < data.getRows(); i++)
+		for(int i = 0; i < labels.getRows(); i++)
 		{
 			//If last layer is Softmax
 			if( layers[layers.length-1].getType().equals("Softmax") )
@@ -196,16 +204,16 @@ public class NeuralNet implements Serializable
 					}
 				}
 			}
-			else //Last layer isn't softmax TODO allow for matrix implementation
+			else //Output layer isn't softmax
 			{
-				if(output.get(0, 0) > threshold)
+				if(output.get(i, 0) > threshold)
 				{
 					classification = 1;
 				}else{
 					classification = 0;
 				}
 
-				if(labels.get(0, 0) > threshold)
+				if(labels.get(i, 0) > threshold)
 				{
 					label = 1;
 				}else{
@@ -216,18 +224,20 @@ public class NeuralNet implements Serializable
 				if(classification == label)
 				{
 					if(verbose) 
-						System.out.println(data.getRow(i).toString() + " " + output + " " + "correct.");
+						System.out.println(data.getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "correct.");
 					numCorrect++;
 				}else
 				{
 					if(verbose) 
-						System.out.println(data.getRow(i).toString() + " " + output + " " + "incorrect.");
+						System.out.println(data.getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "incorrect.");
 					numIncorrect++;
 				}
 			}
 
 		}
-		System.out.println("Accuracy: "+ String.format("%.02f%%",((double)numCorrect/(numCorrect+numIncorrect)*100.0)));
+		double accuracy = ((double)numCorrect/(numCorrect+numIncorrect)*100.0);
+		System.out.println("Accuracy: "+ String.format("%.02f%%",accuracy));
+		return accuracy;
 	}
 	
 	/**
@@ -245,7 +255,7 @@ public class NeuralNet implements Serializable
 	/**
 	 * Save a serialized version of the NeuralNet
 	 * 
-	 * @param filename name of ouput file typically ending with (.ser)
+	 * @param filename name (location) of ouput file typically ending with (.ser)
 	 */
 	public void save(String filename)
 	{
@@ -261,7 +271,11 @@ public class NeuralNet implements Serializable
 			i.printStackTrace();
 		}
 	}
-	
+	/**
+	 * De-serialize NeuralNet object.
+	 * @param filename location of file
+	 * @return de-serialized NeuralNet 
+	 */
 	public static NeuralNet load(String filename)
 	{
 		//Deserialize

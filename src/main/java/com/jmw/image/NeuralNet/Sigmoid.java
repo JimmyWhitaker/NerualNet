@@ -38,7 +38,6 @@ public class Sigmoid extends ActivationFunction
 		// +0.1 is fix for flat spot see http://www.heatonresearch.com/wiki/Flat_Spot
 		double output = getOutput(net);
 		double derivative = output * (1d - output);
-		
 		return derivative;
 	}
 

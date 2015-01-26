@@ -32,12 +32,12 @@ public class Softmax extends ActivationFunction
 		Matx result = new Matx(matx); 
 		
 		//Iterate through each column of output data
-		for(int j = 0; j < matx.getCols(); j++)
+		for(int j = 0; j < result.getCols(); j++)
 		{
-			double current = 0;
-			double max = 0; 
-			double numerator = 0;
-			double denominator = 0;
+			double current = 0.0;
+			double max = 0.0; 
+			double numerator = 0.0;
+			double denominator = 0.0;
 			
 			/* 
 			 * Find the max of the column.
@@ -47,7 +47,7 @@ public class Softmax extends ActivationFunction
 			max = result.maxInColumn(j);
 			
 			//Compute denominator and store numerator
-			for(int i = 0; i < matx.getRows(); i++)
+			for(int i = 0; i < result.getRows(); i++)
 			{
 				current = result.get(i, j);
 				numerator = Math.exp(current - max);
@@ -56,7 +56,7 @@ public class Softmax extends ActivationFunction
 			}
 			
 			//Compute output of softmax function
-			for(int i = 0; i < matx.getRows(); i++)
+			for(int i = 0; i < result.getRows(); i++)
 			{
 				double ans = (result.get(i, j))/denominator;
 				result.set(i,j,ans);
@@ -80,23 +80,29 @@ public class Softmax extends ActivationFunction
 	@Override
 	public Matx getDerivative(Matx matx)
 	{
-		Matx result = this.getOutput(matx);
+		Matx result = getOutput(matx);
 		
 		//Iterate through each column
 		for(int j = 0; j < matx.getCols(); j++)
 		{
 			double current = 0;
-			double answer = 0;
+			double ans = 0;
 			
 			//Compute derivative of value for the softmax function and store it.
 			for(int i = 0; i < matx.getRows(); i++)
 			{
 				current = result.get(i, j);
-				answer = current * (1d - current);
-				result.set(i, j, answer);
+				ans = current * (1d - current);
+				result.set(i, j, ans);
+				
+				//Check if approaching overflow
+				if(ans < Double.MIN_VALUE +Math.pow(10, -100))
+				{
+					System.out.println("Possibility of overflow in Softmax.");
+				}
 			}
 			
-		}
+		}	
 		return result;
 	}
 	

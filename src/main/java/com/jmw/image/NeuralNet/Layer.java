@@ -59,14 +59,14 @@ public class Layer implements Serializable
 	 */
 	public Matx computeLayerOutput(Matx layerInput)
 	{
-		Matx input = Matx.multiply(weight, layerInput);
+		Matx weightedInput = Matx.multiply(weight, layerInput);
 		if(bias != null)
 		{
-			input = Matx.add(input, bias);
+			weightedInput = Matx.add(weightedInput, bias);
 			
 		}
-		this.weightedInput = input;
-		this.output = activationFunction.getOutput(input);
+		this.weightedInput = weightedInput;
+		this.output = activationFunction.getOutput(weightedInput);
 		return output;
 	}
 
@@ -78,10 +78,16 @@ public class Layer implements Serializable
 	 * @return error
 	 */
 	public Matx computeErrorDelta(Matx dataLabel)
-	{
-		Matx term1 = Matx.subtract(dataLabel,output);
-		Matx term2 = activationFunction.getDerivative(weightedInput);
-		this.error =  Matx.elementMultiply(term2, term1);
+	{	
+		// Cross Entropy Loss for Softmax output layer
+		if(activationFunction.getType().equals("Softmax") )
+		{
+			this.error = Matx.subtract(dataLabel,output); // o - y
+		}else{ // Single class output
+			Matx term1 = Matx.subtract(dataLabel,output);
+			Matx term2 = activationFunction.getDerivative(weightedInput);
+			this.error =  Matx.elementMultiply(term2, term1);
+		}
 		return error;
 	}
 

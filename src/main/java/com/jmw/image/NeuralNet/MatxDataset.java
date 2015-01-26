@@ -1,5 +1,6 @@
 package com.jmw.image.NeuralNet;
 
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -16,6 +17,7 @@ public class MatxDataset implements Dataset
 	private static Random random = new Random(1192015);
 	protected int numBatches;
 	protected int batchSize;
+	private int matxIndex;
 	
 	/**
 	 * Constructs a new, empty Dataset object.
@@ -37,8 +39,8 @@ public class MatxDataset implements Dataset
 	 */
 	public MatxDataset(Matx data, Matx labels)
 	{
-		this.data = data;
-		this.labels = labels;
+		this.data = new Matx(data);
+		this.labels = new Matx(labels);
 		this.numExamples = data.getRows();
 	}
 	
@@ -70,7 +72,7 @@ public class MatxDataset implements Dataset
 	 */
 	public int getNumExamples()
 	{
-		return this.numExamples;
+		return numExamples;
 	}
 
 	/**
@@ -78,7 +80,7 @@ public class MatxDataset implements Dataset
 	 */
 	public Matx getData()
 	{
-		return this.data;
+		return data;
 	}
 
 	/**
@@ -86,7 +88,7 @@ public class MatxDataset implements Dataset
 	 */
 	public Matx getLabels()
 	{
-		return this.labels;
+		return labels;
 	}
 	
 	protected void setData(Matx data)
@@ -105,9 +107,20 @@ public class MatxDataset implements Dataset
 		this.batchSize = batchSize;	
 	}
 	
+	/**
+	 * TODO return a batch (currently returns all)
+	 */
 	public Dataset getBatch()
 	{
-		return new MatxDataset();
+		int numExamples = batchSize;
+		
+		//Keep last batch from overflowing
+		if( (matxIndex + batchSize) > data.getRows()-1)
+		{
+			numExamples = data.getRows() - matxIndex;
+		}
+			
+		return new MatxDataset(data,labels);
 	}
 	
 	public int getNumBatches()
