@@ -1,13 +1,5 @@
 package com.jmw.image.NeuralNet;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
-import mnist.MnistManager.MnistManager;
-
 /**
  * NeuralNet Implementation
  * App.java
@@ -40,25 +32,25 @@ public class App
 	public static void newMnistTest()
 	{
 		int[] neuronsPerLayer = {300,10};
-		String[] layerType = {"Relu","Softmax"}; // Currently all neurons in a layer have the same activation function
+		String[] layerType = {"Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
 		int epochs = 1000;
-		int batchSize = 80;
+		int batchSize = 128;
 		double learningRate = 0.1;
-		double momentum = 1;
-
+		double momentum = 1.0;
+		
 		// Import training data
-		MnistDataset mnistTrainingDataset = new MnistDataset("train-images-idx3-ubyte","train-labels-idx1-ubyte");
-
-		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumFeatures());
-
+		MnistDataset mnistTrainingDataset = MnistDataset.load("trainingData.ser");
+		
 		//Import testing data
-		MnistDataset mnistTestingDataset = new MnistDataset("t10k-images-idx3-ubyte","t10k-labels-idx1-ubyte");
+		MnistDataset mnistTestingDataset = MnistDataset.load("testingData.ser");
+
+		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
 		
 		//Train the classifier
 		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum);
 
 		//Save NeuralNet after training
-		nn.save("NeuralNet2.ser");		
+		nn.save("NeuralNet.ser");		
 	}
 	
 	public static void continueMnistTest()
@@ -80,9 +72,6 @@ public class App
 		
 		//Continue Training
 		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum);
-		
-		
-		
 	}
 
 	/**

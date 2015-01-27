@@ -18,7 +18,7 @@ public class NeuralNet implements Serializable
 	 * Determines if a de-serialized file is compatible with this class.
 	 */
 	private static final long serialVersionUID = 2304156243561498598L;
-	
+
 	private int numLayers;
 	// TODO Add Mask for DropConnect
 	public Layer[] layers;
@@ -61,42 +61,45 @@ public class NeuralNet implements Serializable
 	 * @param learningRate 
 	 * @param momentum
 	 */
-	
 	public void train(Dataset dataset, Dataset testset, int epochs, int batchSize, double learningRate, double momentum)
 	{
 		//Import testing data
-		Matx testingData = testset.getData();
-		Matx testingLabels = testset.getLabels();
-		MatxDataset testDataset = new MatxDataset(testingData, testingLabels);
-		
-		dataset.splitIntoBatches(batchSize);
-		
+		double accuracy = 0.0;
+		double bestAccuracy = 0.0;
+
 		//Epoch iteration
 		for(int e = 0; e < epochs; e++)
 		{
-			Dataset batch = dataset.getBatch(); // Get a batch of the data
-			
-			batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
-			
+			dataset.splitIntoBatches(batchSize);
+			Dataset batch = null;
 			//Training Batch iteration
 			for(int j = 0; j < dataset.getNumBatches(); j++)
 			{
+				batch = dataset.getBatch(); // Get a batch of the data
+				batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
+
 				Matx dataInput = batch.getData().getTranspose();
-				Matx dataInputLabel = batch.getLabels().getTranspose();
+				Matx dataInputLabel = batch.getLabels().getTranspose();				
+
 				//Feed Forward
 				feedForward(dataInput);
+
 				//Back-propagate error deltas
 				backPropagate(dataInputLabel);
+
 				//Update Weights with error deltas
 				updateWeights(dataInput,learningRate);
-//				showTrainingPercentage(count, dataset.getNumBatches(),epochs);
+
+				//				showTrainingPercentage(count, dataset.getNumBatches(),epochs);
 			}
 			//Save Neural Network when testing accuracy is above a certain threshold (avoids over-training)
-			if(test(testingData,testingLabels,false)>90)
+			accuracy = test(testset,batchSize,false);
+			if(accuracy>bestAccuracy)
 			{
-				save("Mnist-90.ser");
+				bestAccuracy = accuracy;
+				save("Mnist-best.ser");
 			}
-				
+
 			learningRate *= momentum; // Controls the change in the learning rate between epochs
 		}
 	}
@@ -166,92 +169,101 @@ public class NeuralNet implements Serializable
 	 * @param dataset
 	 * @param verbose if true: presents more output to the terminal
 	 */
-	public double test(Matx data, Matx labels, boolean verbose) //TODO change back to Dataset paramenter instead of 2 Matxs
+	public double test(Dataset testingSet, int batchSize, boolean verbose) //TODO change back to Dataset paramenter instead of 2 Matxs
 	{
-//		Matx data = dataset.getData();
-//		Matx labels = dataset.getLabels();
-		Matx output = feedForward(data.getTranspose()).getTranspose();
-		
 		double threshold = 0.5;
 		int classification;
 		int label;
 		int numCorrect=0;
 		int numIncorrect=0;
+
+		testingSet.splitIntoBatches(batchSize);
+		Dataset batch = null;
 		
-		//Each Training Example iteration
-		for(int i = 0; i < labels.getRows(); i++)
+		//Training Batch iteration
+		for(int b = 0; b < testingSet.getNumBatches(); b++)
 		{
-			//If last layer is Softmax
-			if( layers[layers.length-1].getType().equals("Softmax") )
+			batch = testingSet.getBatch(); // Get a batch of the data		
+			Matx output = feedForward(batch.getData().getTranspose()).getTranspose();
+			Matx labels = batch.getLabels();
+
+			//Each Training Example iteration
+			for(int i = 0; i < labels.getRows(); i++)
 			{
-				/**
-				 * Get the maximum of an output vector.
-				 * Find the location of the 1 in the label vector.
-				 * If the output vector contains the max at the 
-				 * same index, then it is a correct classification.
-				 */
-				double max = output.maxInRow(i);
-				for(int j = 0; j < labels.getCols(); j++)
+				//If last layer is Softmax
+				if( layers[layers.length-1].getType().equals("Softmax") )
 				{
-					if(labels.get(i, j) == 1.0) 
+					/**
+					 * Get the maximum of an output vector.
+					 * Find the location of the 1 in the label vector.
+					 * If the output vector contains the max at the 
+					 * same index, then it is a correct classification.
+					 */
+					double max = output.maxInRow(i);
+					for(int j = 0; j < labels.getCols(); j++)
 					{
-						if(output.get(i, j) == max)
+						if(labels.get(i, j) == 1.0) 
 						{
-							numCorrect++;
-						}else{
-							numIncorrect++;
+							if(output.get(i, j) == max)
+							{
+								numCorrect++;
+								break;
+							}else{
+								numIncorrect++;
+								break;
+							}
 						}
 					}
 				}
+				else //Output layer isn't softmax
+				{
+					if(output.get(i, 0) > threshold)
+					{
+						classification = 1;
+					}else{
+						classification = 0;
+					}
+
+					if(labels.get(i, 0) > threshold)
+					{
+						label = 1;
+					}else{
+						label = 0;
+					}
+
+
+					if(classification == label)
+					{
+						if(verbose) 
+							System.out.println(batch.getData().getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "correct.");
+						numCorrect++;
+					}else
+					{
+						if(verbose) 
+							System.out.println(batch.getData().getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "incorrect.");
+						numIncorrect++;
+					}
+				}
+
 			}
-			else //Output layer isn't softmax
-			{
-				if(output.get(i, 0) > threshold)
-				{
-					classification = 1;
-				}else{
-					classification = 0;
-				}
-
-				if(labels.get(i, 0) > threshold)
-				{
-					label = 1;
-				}else{
-					label = 0;
-				}
-
-
-				if(classification == label)
-				{
-					if(verbose) 
-						System.out.println(data.getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "correct.");
-					numCorrect++;
-				}else
-				{
-					if(verbose) 
-						System.out.println(data.getRow(i) + " " + String.format("%.02f",output.get(i, 0)) + " " + "incorrect.");
-					numIncorrect++;
-				}
-			}
-
 		}
 		double accuracy = ((double)numCorrect/(numCorrect+numIncorrect)*100.0);
 		System.out.println("Accuracy: "+ String.format("%.02f%%",accuracy));
 		return accuracy;
 	}
-	
-	/**
-	 * Show the completed training percentage.
-	 * @param numCompleted
-	 * @param numBatches
-	 * @param epochs
-	 */
-	private static final void showTrainingPercentage(int numCompleted, int numBatches, int epochs)
-	{
-		double percentage = ( ((double)numCompleted) / (numBatches*epochs) *100);
-		System.out.println(String.format("%.02f%%",percentage) +'\r' );
-	}
-	
+
+	//	/**
+	//	 * Show the completed training percentage.
+	//	 * @param numCompleted
+	//	 * @param numBatches
+	//	 * @param epochs
+	//	 */
+	//	private static final void showTrainingPercentage(int numCompleted, int numBatches, int epochs)
+	//	{
+	//		double percentage = ( ((double)numCompleted) / (numBatches*epochs) *100);
+	//		System.out.println(String.format("%.02f%%",percentage) +'\r' );
+	//	}
+
 	/**
 	 * Save a serialized version of the NeuralNet
 	 * 
@@ -261,6 +273,7 @@ public class NeuralNet implements Serializable
 	{
 		try
 		{
+			System.out.println("Saving Neural Net.");
 			FileOutputStream fileOut = new FileOutputStream(filename);
 			ObjectOutputStream outStream = new ObjectOutputStream(fileOut);
 			outStream.writeObject(this);
@@ -271,6 +284,7 @@ public class NeuralNet implements Serializable
 			i.printStackTrace();
 		}
 	}
+
 	/**
 	 * De-serialize NeuralNet object.
 	 * @param filename location of file

@@ -1,6 +1,5 @@
 package com.jmw.image.NeuralNet;
 
-import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -15,9 +14,11 @@ public class MatxDataset implements Dataset
 	private Matx labels;
 	protected int numExamples;
 	private static Random random = new Random(1192015);
+	
 	protected int numBatches;
 	protected int batchSize;
-	private int matxIndex;
+	private int batchIndex;
+	private int[] order; // Order for the data batch
 	
 	/**
 	 * Constructs a new, empty Dataset object.
@@ -42,6 +43,14 @@ public class MatxDataset implements Dataset
 		this.data = new Matx(data);
 		this.labels = new Matx(labels);
 		this.numExamples = data.getRows();
+		
+		this.order = new int[numExamples];
+		
+		for(int i = 0; i < numExamples; i++)
+		{
+			this.order[i] = i;
+		}
+		this.batchIndex = 0;
 	}
 	
 	/**
@@ -112,15 +121,70 @@ public class MatxDataset implements Dataset
 	 */
 	public Dataset getBatch()
 	{
-		int numExamples = batchSize;
+		int batchExamples = batchSize;
+		int[] rowIndices = new int[batchExamples];
+		int[] dataColumnIndices = new int[data.getCols()];
+		int[] labelColumnIndices = new int[labels.getCols()];
+		
+		//Select all data columns
+		for(int i = 0; i < dataColumnIndices.length; i++)
+		{
+			dataColumnIndices[i]=i;
+		}
+		
+		//Select all label columns
+		for(int i = 0; i < labelColumnIndices.length; i++)
+		{
+			labelColumnIndices[i]=i;
+		}
 		
 		//Keep last batch from overflowing
-		if( (matxIndex + batchSize) > data.getRows()-1)
+		if( (batchIndex-1) + batchSize > numExamples)
 		{
-			numExamples = data.getRows() - matxIndex;
+			batchExamples = numExamples - batchIndex;
 		}
-			
-		return new MatxDataset(data,labels);
+		
+		
+		
+		// Select rows for the batch
+		for(int i = 0; i < rowIndices.length; i++)
+		{
+			rowIndices[i] = order[batchIndex];
+			this.batchIndex++;
+		}
+		if( batchIndex == numExamples)
+		{
+			this.batchIndex = 0;
+			randomizeOrder();
+		}
+		
+		
+		
+		// Create Dataset from the selected rows
+		Matx batchData = data.select(rowIndices, dataColumnIndices);
+		Matx batchLabels = labels.select(rowIndices, labelColumnIndices);
+		
+		return new MatxDataset(batchData, batchLabels);
+	}
+	
+	/**
+	 * Randomize data order using Knuth Shuffle
+	 */
+	private void randomizeOrder()
+	{
+		if(numExamples != 1) // Resolve one training example issue
+		{
+			int randIndex = 0;
+			int currentValue = 0;
+			for(int i = 0; i < numExamples; i++)
+			{
+				randIndex = (random.nextInt(numExamples-1));
+				currentValue = order[i];
+				//swap values
+				this.order[i] = order[randIndex];
+				this.order[randIndex] = currentValue;
+			}
+		}
 	}
 	
 	public int getNumBatches()

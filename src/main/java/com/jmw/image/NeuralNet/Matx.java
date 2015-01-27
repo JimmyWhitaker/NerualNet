@@ -284,9 +284,9 @@ public class Matx implements Serializable
 		return matrix.maxInRow(i);
 	}
 	
-//	public Matx select(int startRow, int stopRow, int startCol, int stopCol)
-//	{
-//		matrix.select(rowIndices, columnIndices);
-//	}
-//	
+	public Matx select(int[] rowIndices, int[] columnIndices)
+	{
+		return new Matx(matrix.select(rowIndices, columnIndices));
+	}
+	
 }

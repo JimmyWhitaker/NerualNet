@@ -63,7 +63,6 @@ public class Layer implements Serializable
 		if(bias != null)
 		{
 			weightedInput = Matx.add(weightedInput, bias);
-			
 		}
 		this.weightedInput = weightedInput;
 		this.output = activationFunction.getOutput(weightedInput);
