@@ -61,11 +61,11 @@ public class NeuralNet implements Serializable
 	 * @param learningRate 
 	 * @param momentum
 	 */
-	public void train(Dataset dataset, Dataset testset, int epochs, int batchSize, double learningRate, double momentum)
+	public void train(Dataset dataset, Dataset testset, int epochs, int batchSize, double learningRate, double momentum, String filename)
 	{
 		//Import testing data
 		double accuracy = 0.0;
-		double bestAccuracy = 0.0;
+		double bestAccuracy = 96.87;
 
 		//Epoch iteration
 		for(int e = 0; e < epochs; e++)
@@ -97,7 +97,7 @@ public class NeuralNet implements Serializable
 			if(accuracy>bestAccuracy)
 			{
 				bestAccuracy = accuracy;
-				save("Mnist-best.ser");
+				save(filename);
 			}
 
 			learningRate *= momentum; // Controls the change in the learning rate between epochs

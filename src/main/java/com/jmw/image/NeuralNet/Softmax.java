@@ -60,8 +60,14 @@ public class Softmax extends ActivationFunction
 			{
 				double ans = (result.get(i, j))/denominator;
 				result.set(i,j,ans);
+				//Check if approaching overflow
+				if(ans < Double.MIN_VALUE +Math.pow(10, -100))
+				{
+					System.out.println("Possibility of underflow in Softmax.");
+				}
 			}
 		}
+		
 		return result;                
 	}
 	
@@ -98,7 +104,7 @@ public class Softmax extends ActivationFunction
 				//Check if approaching overflow
 				if(ans < Double.MIN_VALUE +Math.pow(10, -100))
 				{
-					System.out.println("Possibility of overflow in Softmax.");
+					System.out.println("Possibility of underflow in Softmax.");
 				}
 			}
 			

@@ -21,7 +21,7 @@ public class App
 		long start = System.currentTimeMillis();
 
 		//Run test
-		newMnistTest();
+		mnistTest();
 
 		System.out.println("Runtime: " + (System.currentTimeMillis()-start));
 	}
@@ -29,14 +29,15 @@ public class App
 	/**
 	 * Mnist Test
 	 */
-	public static void newMnistTest()
+	public static void mnistTest()
 	{
-		int[] neuronsPerLayer = {300,10};
-		String[] layerType = {"Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
-		int epochs = 1000;
+		int[] neuronsPerLayer = {50,30,10};
+		String[] layerType = {"Sigmoid","Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
+		int epochs = 40;
 		int batchSize = 128;
 		double learningRate = 0.1;
-		double momentum = 1.0;
+		double momentum = 1;
+		String filename = "Mnist-50-30-10-Sig.ser";
 		
 		// Import training data
 		MnistDataset mnistTrainingDataset = MnistDataset.load("trainingData.ser");
@@ -44,34 +45,40 @@ public class App
 		//Import testing data
 		MnistDataset mnistTestingDataset = MnistDataset.load("testingData.ser");
 
-		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
+		NeuralNet nn = NeuralNet.load(filename);
+//		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
 		
 		//Train the classifier
-		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum);
+		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
 
 		//Save NeuralNet after training
 		nn.save("NeuralNet.ser");		
 	}
 	
-	public static void continueMnistTest()
+	/**
+	 * Start an MNIST Test from scratch.
+	 */
+	public static void fullMnistTest()
 	{
+		int[] neuronsPerLayer = {300,10};
+		String[] layerType = {"Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
 		int epochs = 100;
-		int batchSize = 80;
+		int batchSize = 128;
 		double learningRate = 0.1;
 		double momentum = 1;
+		String filename = "Mnist-300-100-10-Sig.ser";
 		
 		//Import Training Data
 		MnistDataset mnistTrainingDataset = new MnistDataset("train-images-idx3-ubyte","train-labels-idx1-ubyte");
-		
-		//Load saved NeuralNet
-		NeuralNet nn = NeuralNet.load("NeuralNet.ser");
-		System.out.println("NumberOfNeurons: " + nn.layers[0].getWeight().getRows());
-		
-		//Test
+
+		//Import Testing Data
 		MnistDataset mnistTestingDataset = new MnistDataset("t10k-images-idx3-ubyte","t10k-labels-idx1-ubyte");
 		
-		//Continue Training
-		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum);
+		//Create new Neural Network
+		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
+		
+		//Train Neural Network
+		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
 	}
 
 	/**
@@ -85,6 +92,7 @@ public class App
 		int batchSize = 2;
 		double learningRate = 0.7;
 		double momentum = 1.0;
+		String filename = "xor.ser";
 
 		double[][] xor_data = {{0,0,1,1},{0,1,0,1}};
 		double[] xor_labels = {0,1,1,0};
@@ -93,7 +101,7 @@ public class App
 		//TODO add mean and stddev to parameters
 		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, dataset.getData().getCols()); 
 		
-		nn.train(dataset, dataset, epochs, batchSize, learningRate, momentum);
+		nn.train(dataset, dataset, epochs, batchSize, learningRate, momentum, filename);
 	}
 	
 	/**
@@ -116,7 +124,7 @@ public class App
 		double[][] b2 = {{0.1}};
 		nn.layers[0].bias = Matx.createMatx(b1);
 		nn.layers[1].bias = Matx.createMatx(b2);
-		nn.train(dataset,dataset, 1, 1, 0.9, 1);
+		nn.train(dataset,dataset, 1, 1, 0.9, 1,null);
 //		nn.test(dataset,false);
 	}
 }
