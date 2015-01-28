@@ -31,13 +31,13 @@ public class App
 	 */
 	public static void mnistTest()
 	{
-		int[] neuronsPerLayer = {50,30,10};
-		String[] layerType = {"Sigmoid","Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
-		int epochs = 40;
+		int[] neuronsPerLayer = {300,10};
+		String[] layerType = {"Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
+		int epochs = 100;
 		int batchSize = 128;
 		double learningRate = 0.1;
 		double momentum = 1;
-		String filename = "Mnist-50-30-10-Sig.ser";
+		String filename = "Mnist-300-DC-Sig.ser";
 		
 		// Import training data
 		MnistDataset mnistTrainingDataset = MnistDataset.load("trainingData.ser");
@@ -45,14 +45,11 @@ public class App
 		//Import testing data
 		MnistDataset mnistTestingDataset = MnistDataset.load("testingData.ser");
 
-		NeuralNet nn = NeuralNet.load(filename);
-//		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
+//		NeuralNet nn = NeuralNet.load(filename);
+		DropConnectNeuralNet dc = new DropConnectNeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
 		
 		//Train the classifier
-		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
-
-		//Save NeuralNet after training
-		nn.save("NeuralNet.ser");		
+		dc.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
 	}
 	
 	/**
@@ -110,21 +107,21 @@ public class App
 	public static void backpropTest()
 	{
 		//Error Discovery Test - Comparison by Hand
-		int[] neuronsPerLayer = {2,1};
-		String[] layerType = {"Sigmoid","Sigmoid"};
-		double[] data = {1,0,1};
-		double[] label = {1};
-		MatxDataset dataset = new MatxDataset(Matx.createMatx(data).getTranspose(), Matx.createMatx(label));
-		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, dataset.getData().getCols());
-		double[][] w1 = {{0.2,0.4,-0.5},{-0.3,0.1,0.2}};
-		double[] w2 = {-0.3,-0.2};
-		nn.layers[0].weight = Matx.createMatx(w1);
-		nn.layers[1].weight = Matx.createMatx(w2).getTranspose();
-		double[][] b1 = {{-0.4},{0.2}};
-		double[][] b2 = {{0.1}};
-		nn.layers[0].bias = Matx.createMatx(b1);
-		nn.layers[1].bias = Matx.createMatx(b2);
-		nn.train(dataset,dataset, 1, 1, 0.9, 1,null);
+//		int[] neuronsPerLayer = {2,1};
+//		String[] layerType = {"Sigmoid","Sigmoid"};
+//		double[] data = {1,0,1};
+//		double[] label = {1};
+//		MatxDataset dataset = new MatxDataset(Matx.createMatx(data).getTranspose(), Matx.createMatx(label));
+//		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, dataset.getData().getCols());
+//		double[][] w1 = {{0.2,0.4,-0.5},{-0.3,0.1,0.2}};
+//		double[] w2 = {-0.3,-0.2};
+//		nn.layers[0].weight = Matx.createMatx(w1);
+//		nn.layers[1].weight = Matx.createMatx(w2).getTranspose();
+//		double[][] b1 = {{-0.4},{0.2}};
+//		double[][] b2 = {{0.1}};
+//		nn.layers[0].bias = Matx.createMatx(b1);
+//		nn.layers[1].bias = Matx.createMatx(b2);
+//		nn.train(dataset,dataset, 1, 1, 0.9, 1,null);
 //		nn.test(dataset,false);
 	}
 }

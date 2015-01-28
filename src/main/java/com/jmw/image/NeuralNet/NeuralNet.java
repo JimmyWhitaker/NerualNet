@@ -19,10 +19,14 @@ public class NeuralNet implements Serializable
 	 */
 	private static final long serialVersionUID = 2304156243561498598L;
 
-	private int numLayers;
+	protected int numLayers;
 	// TODO Add Mask for DropConnect
 	public Layer[] layers;
 
+	public NeuralNet()
+	{
+		
+	}
 	/**
 	 * Constructs a new neural network given the parameters.
 	 * 
@@ -46,7 +50,7 @@ public class NeuralNet implements Serializable
 			{
 				numInputs = layerNeurons[i-1]; //Number of inputs = numper of outputs from previous layer. 
 			}
-			layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs); // Create layer
+			layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs); // Create Softmax layer
 		}
 	}
 
@@ -76,7 +80,7 @@ public class NeuralNet implements Serializable
 			for(int j = 0; j < dataset.getNumBatches(); j++)
 			{
 				batch = dataset.getBatch(); // Get a batch of the data
-				batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
+//				batch.randomPerm(); // Randomizes the batch. TODO randomize entire file rather than just the batch
 
 				Matx dataInput = batch.getData().getTranspose();
 				Matx dataInputLabel = batch.getLabels().getTranspose();				
@@ -169,7 +173,7 @@ public class NeuralNet implements Serializable
 	 * @param dataset
 	 * @param verbose if true: presents more output to the terminal
 	 */
-	public double test(Dataset testingSet, int batchSize, boolean verbose) //TODO change back to Dataset paramenter instead of 2 Matxs
+	public double test(Dataset testingSet, int batchSize, boolean verbose)
 	{
 		double threshold = 0.5;
 		int classification;
@@ -180,7 +184,7 @@ public class NeuralNet implements Serializable
 		testingSet.splitIntoBatches(batchSize);
 		Dataset batch = null;
 		
-		//Training Batch iteration
+		//Testing Batch iteration
 		for(int b = 0; b < testingSet.getNumBatches(); b++)
 		{
 			batch = testingSet.getBatch(); // Get a batch of the data		
@@ -191,7 +195,7 @@ public class NeuralNet implements Serializable
 			for(int i = 0; i < labels.getRows(); i++)
 			{
 				//If last layer is Softmax
-				if( layers[layers.length-1].getType().equals("Softmax") )
+				if( layers[layers.length-1].getActivationFunctionType().equals("Softmax") )
 				{
 					/**
 					 * Get the maximum of an output vector.

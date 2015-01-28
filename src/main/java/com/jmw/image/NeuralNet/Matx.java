@@ -288,5 +288,41 @@ public class Matx implements Serializable
 	{
 		return new Matx(matrix.select(rowIndices, columnIndices));
 	}
+
+	/**
+	 * Creates a Binary Random Matrix according to a probability distribution
+	 * @param rows
+	 * @param cols
+	 * @param probability
+	 * @return
+	 */
+	public static Matx createBinaryRandMatx(int rows, int cols, double probability)
+	{
+		Matrix result =  Basic2DMatrix.zero(rows, cols);
+		for(int i = 0; i < rows; i++)
+		{
+			for(int j = 0; j < cols; j++)
+			{
+				result.set(i, j, getBinomial(1,probability)); //Get binomial distributed values according to probability
+			}
+		}
+		return new Matx(result);
+	}
+	/**
+	 * Return a binomial value.
+	 * 
+	 * @param n max number (inclusive)
+	 * @param p probability distribution
+	 * @return Binomial random value
+	 */
+	public static double getBinomial(int n, double p) {
+		  double x = 0;
+		  for(int i = 0; i < n; i++) 
+		  {
+		    if(random.nextDouble() < p)
+		      x++;
+		  }
+		  return x;
+		}
 	
 }

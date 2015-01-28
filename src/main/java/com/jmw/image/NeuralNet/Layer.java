@@ -13,16 +13,16 @@ public class Layer implements Serializable
 	/**
 	 * Determines if a de-serialized file is compatible with this class.
 	 */
-	private static final long serialVersionUID = 5215917274187351523L;
+	protected static final long serialVersionUID = 5215917274187351523L;
 	
-	private Matx weightedInput; // weight*layerInput
-	private Matx output;
-	public Matx weight;
-	private Matx error; // error delta
-	public Matx bias;
+	protected Matx weightedInput; // weight*layerInput
+	protected Matx output;
+	protected Matx weight;
+	protected Matx error; // error delta
+//	public Matx bias;
 	
 	// TODO create mask matrix for drop connect
-	private ActivationFunction activationFunction;
+	protected ActivationFunction activationFunction;
 	
 	/**
 	 * Constructs a new Layer for a Neural Network.
@@ -60,13 +60,13 @@ public class Layer implements Serializable
 	public Matx computeLayerOutput(Matx layerInput)
 	{
 		Matx weightedInput = Matx.multiply(weight, layerInput);
-		if(bias != null)
-		{
-			weightedInput = Matx.add(weightedInput, bias);
-		}
+//		if(bias != null)
+//		{
+//			weightedInput = Matx.add(weightedInput, bias);
+//		}
 		this.weightedInput = weightedInput;
 		this.output = activationFunction.getOutput(weightedInput);
-		return output;
+		return this.output;
 	}
 
 	/**
@@ -81,13 +81,13 @@ public class Layer implements Serializable
 		// Cross Entropy Loss for Softmax output layer
 		if(activationFunction.getType().equals("Softmax") )
 		{
-			this.error = Matx.subtract(dataLabel,output); // o - y
+			this.error = Matx.subtract(dataLabel,this.output); // o - y
 		}else{ // Single class output
-			Matx term1 = Matx.subtract(dataLabel,output);
-			Matx term2 = activationFunction.getDerivative(weightedInput);
+			Matx term1 = Matx.subtract(dataLabel,this.output);
+			Matx term2 = activationFunction.getDerivative(this.weightedInput);
 			this.error =  Matx.elementMultiply(term2, term1);
 		}
-		return error;
+		return this.error;
 	}
 
 	/**
@@ -100,10 +100,10 @@ public class Layer implements Serializable
 	 */
 	public Matx computeErrorDelta(Matx nextLayerError, Matx nextLayerWeight)
 	{
-		Matx term1 = Matx.multiply(nextLayerWeight.getTranspose(),nextLayerError);
+		Matx term1 = Matx.multiply(nextLayerWeight.getTranspose(), nextLayerError);
 		Matx term2 = activationFunction.getDerivative(this.weightedInput);
 		this.error = Matx.elementMultiply(term1, term2);
-		return error;
+		return this.error;
 	}
 	
 	/**
@@ -119,10 +119,10 @@ public class Layer implements Serializable
 		this.weight = Matx.add(this.weight, deltaWeight);
 		
 		//Update the bias if there is one. 
-		if(this.bias != null)
-		{
-			this.bias = Matx.add(this.bias, Matx.scalarMultiply(learningRate, this.error));
-		}
+//		if(this.bias != null)
+//		{
+//			this.bias = Matx.add(this.bias, Matx.scalarMultiply(learningRate, this.error));
+//		}
 	}
 	
 	/**
@@ -143,12 +143,12 @@ public class Layer implements Serializable
 	
 	public int getNumNeurons()
 	{
-		return weight.getRows();
+		return this.weight.getRows();
 	}
 	
-	public String getType()
+	public String getActivationFunctionType()
 	{
-		return activationFunction.getType();
+		return this.activationFunction.getType();
 	}
 	
 }
