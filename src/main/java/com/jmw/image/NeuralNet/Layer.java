@@ -17,9 +17,9 @@ public class Layer implements Serializable
 	
 	protected Matx weightedInput; // weight*layerInput
 	protected Matx output;
-	protected Matx weight;
-	protected Matx error; // error delta
-//	public Matx bias;
+	protected Matx weight; //Bias is incorporated as additional in weights
+	protected Matx error; // Error delta
+	public Matx bias; // Bias vector of 1s appended to input data
 	
 	// TODO create mask matrix for drop connect
 	protected ActivationFunction activationFunction;
@@ -31,7 +31,7 @@ public class Layer implements Serializable
 	 * @param numNeurons Number of neurons in the layer
 	 * @param numInputs Number of inputs to the layer
 	 */
-	public Layer(String activationFunction, int numNeurons, int numInputs)
+	public Layer(String activationFunction, int numNeurons, int numInputs, int batchSize)
 	{		
 		if(activationFunction.equals("Sigmoid"))
 		{
@@ -48,7 +48,8 @@ public class Layer implements Serializable
 		}
 		
 		//Randomly initialize the weight Matx according to a normal distribution
-		this.weight = Matx.createRandNormMatx(numNeurons, numInputs);
+		this.weight = Matx.createRandNormMatx(numNeurons, numInputs+1); // Bias incorporated into weight
+		this.bias = Matx.createOnesMatx(1, batchSize); //Appended to input matrix
 	}
 	
 	/**
@@ -59,13 +60,8 @@ public class Layer implements Serializable
 	 */
 	public Matx computeLayerOutput(Matx layerInput)
 	{
-		Matx weightedInput = Matx.multiply(weight, layerInput);
-//		if(bias != null)
-//		{
-//			weightedInput = Matx.add(weightedInput, bias);
-//		}
-		this.weightedInput = weightedInput;
-		this.output = activationFunction.getOutput(weightedInput);
+		this.weightedInput = Matx.multiply(this.weight, layerInput.appendRow(this.bias));
+		this.output = activationFunction.getOutput(this.weightedInput);
 		return this.output;
 	}
 
@@ -100,7 +96,8 @@ public class Layer implements Serializable
 	 */
 	public Matx computeErrorDelta(Matx nextLayerError, Matx nextLayerWeight)
 	{
-		Matx term1 = Matx.multiply(nextLayerWeight.getTranspose(), nextLayerError);
+		//Remove bias from the nextLayerWeight and calculate 
+		Matx term1 = Matx.multiply(nextLayerWeight.getTranspose().removeLastRow(), nextLayerError);
 		Matx term2 = activationFunction.getDerivative(this.weightedInput);
 		this.error = Matx.elementMultiply(term1, term2);
 		return this.error;
@@ -114,15 +111,9 @@ public class Layer implements Serializable
 	 */
 	public void updateWeights(double learningRate, Matx prevLayerOutput)
 	{
-		Matx deltaWeight = Matx.multiply(this.error, prevLayerOutput.getTranspose());
+		Matx deltaWeight = Matx.multiply(this.error, prevLayerOutput.appendRow(this.bias).getTranspose());
 		deltaWeight = Matx.scalarMultiply(learningRate, deltaWeight);
 		this.weight = Matx.add(this.weight, deltaWeight);
-		
-		//Update the bias if there is one. 
-//		if(this.bias != null)
-//		{
-//			this.bias = Matx.add(this.bias, Matx.scalarMultiply(learningRate, this.error));
-//		}
 	}
 	
 	/**

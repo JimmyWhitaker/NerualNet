@@ -31,13 +31,13 @@ public class App
 	 */
 	public static void mnistTest()
 	{
-		int[] neuronsPerLayer = {300,10};
-		String[] layerType = {"Sigmoid","Softmax"}; // Currently all neurons in a layer have the same activation function
+		int[] neuronsPerLayer = {400,10};
+		String[] layerType = {"Relu","Softmax"}; // Currently all neurons in a layer have the same activation function
 		int epochs = 100;
 		int batchSize = 128;
-		double learningRate = 0.1;
-		double momentum = 1;
-		String filename = "Mnist-300-DC-Sig.ser";
+		double learningRate = 0.01;
+		double momentum = 0.9;
+		String filename = "Mnist-400-DC-Relu.ser";
 		
 		// Import training data
 		MnistDataset mnistTrainingDataset = MnistDataset.load("trainingData.ser");
@@ -46,7 +46,7 @@ public class App
 		MnistDataset mnistTestingDataset = MnistDataset.load("testingData.ser");
 
 //		NeuralNet nn = NeuralNet.load(filename);
-		DropConnectNeuralNet dc = new DropConnectNeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
+		DropConnectNeuralNet dc = new DropConnectNeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures(), batchSize);
 		
 		//Train the classifier
 		dc.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
@@ -72,7 +72,7 @@ public class App
 		MnistDataset mnistTestingDataset = new MnistDataset("t10k-images-idx3-ubyte","t10k-labels-idx1-ubyte");
 		
 		//Create new Neural Network
-		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures());
+		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, mnistTrainingDataset.getNumImageFeatures(), batchSize);
 		
 		//Train Neural Network
 		nn.train(mnistTrainingDataset, mnistTestingDataset, epochs, batchSize, learningRate, momentum, filename);
@@ -85,8 +85,8 @@ public class App
 	{
 		int[] neuronsPerLayer = {2,1};
 		String[] layerType = {"Tanh","Tanh"}; // Currently all neurons in a layer have the same activation function
-		int epochs = 10000;
-		int batchSize = 2;
+		int epochs = 1000;
+		int batchSize = 1;
 		double learningRate = 0.7;
 		double momentum = 1.0;
 		String filename = "xor.ser";
@@ -96,7 +96,7 @@ public class App
 
 		MatxDataset dataset = new MatxDataset(Matx.createMatx(xor_data).getTranspose(), Matx.createMatx(xor_labels));
 		//TODO add mean and stddev to parameters
-		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, dataset.getData().getCols()); 
+		NeuralNet nn = new NeuralNet(neuronsPerLayer, layerType, dataset.getData().getCols(),batchSize); 
 		
 		nn.train(dataset, dataset, epochs, batchSize, learningRate, momentum, filename);
 	}

@@ -20,7 +20,6 @@ public class NeuralNet implements Serializable
 	private static final long serialVersionUID = 2304156243561498598L;
 
 	protected int numLayers;
-	// TODO Add Mask for DropConnect
 	public Layer[] layers;
 
 	public NeuralNet()
@@ -34,7 +33,7 @@ public class NeuralNet implements Serializable
 	 * @param layerType Array of Activation Functions used for each layer
 	 * @param inputNeurons number of inputs to the neural network
 	 */
-	public NeuralNet(int[] layerNeurons, String[] layerType, int inputNeurons)
+	public NeuralNet(int[] layerNeurons, String[] layerType, int inputNeurons, int batchSize)
 	{
 		this.numLayers = layerNeurons.length;
 		this.layers = new Layer[numLayers];
@@ -50,7 +49,7 @@ public class NeuralNet implements Serializable
 			{
 				numInputs = layerNeurons[i-1]; //Number of inputs = numper of outputs from previous layer. 
 			}
-			layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs); // Create Softmax layer
+			layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs, batchSize); // Create Softmax layer
 		}
 	}
 
@@ -208,7 +207,7 @@ public class NeuralNet implements Serializable
 					{
 						if(labels.get(i, j) == 1.0) 
 						{
-							if(output.get(i, j) == max)
+							if(output.get(i, j) == max && max > 1.0/(double)labels.getCols()) // Not all the same probability
 							{
 								numCorrect++;
 								break;

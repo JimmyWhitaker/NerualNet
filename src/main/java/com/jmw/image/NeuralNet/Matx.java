@@ -324,5 +324,22 @@ public class Matx implements Serializable
 		  }
 		  return x;
 		}
+
+	public static Matx createOnesMatx(int rows, int columns)
+	{
+		return new Matx(Basic2DMatrix.unit(rows, columns));
+	}
+
+	//TODO clean this method
+	public Matx appendRow(Matx bias)
+	{
+		bias = new Matx(bias.matrix.sliceTopLeft(1, this.getCols()));
+		return new Matx(Basic2DMatrix.block(this.matrix, Basic2DMatrix.zero(this.getRows(), 0), bias.matrix, Basic2DMatrix.zero(bias.getRows(), 0)));
+	}
+
+	public Matx removeLastRow()
+	{
+		return new Matx(this.matrix.removeLastRow());
+	}
 	
 }

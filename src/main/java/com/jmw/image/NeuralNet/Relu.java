@@ -1,7 +1,11 @@
 package com.jmw.image.NeuralNet;
 
 /**
- * Relu (Rectified Linear Unit) Activation Function
+ * Noisy Relu (Rectified Linear Unit) Activation Function
+ * 
+ * f(x) = max(0,x + N(0,1))
+ * f'(x) = 1 if x > 0
+ *         0 otherwise
  * 
  * @author Jimmy
  */
@@ -22,15 +26,16 @@ public class Relu extends ActivationFunction
 	
 	@Override
 	protected double getOutput(double net) {
-		double E_x = Math.exp(1d*net);                
-		return Math.log10(1d + E_x);               
+		return Math.max(0.0, net+Math.random());
 	}
 
 	@Override
 	protected double getDerivative(double net) {
-		double den = 1d + Math.exp(-1.0*net);
-
-		return (1d / den);
+		if (net > 0) 
+			return 1.0;
+		else
+			return 0.0;
+		
 	}
 
 	@Override

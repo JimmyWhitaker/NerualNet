@@ -8,7 +8,7 @@ public class DropConnectNeuralNet extends NeuralNet
 	 */
 	private static final long serialVersionUID = 4569131899036164711L;
 
-	public DropConnectNeuralNet(int[] layerNeurons, String[] layerType, int inputNeurons) {
+	public DropConnectNeuralNet(int[] layerNeurons, String[] layerType, int inputNeurons, int batchSize) {
 		this.numLayers = layerNeurons.length;
 		this.layers = new Layer[numLayers];
 
@@ -25,9 +25,9 @@ public class DropConnectNeuralNet extends NeuralNet
 			}
 			if( layerType[i].equals("Softmax") )
 			{
-				layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs); // Create Softmax layer
+				layers[i] = new Layer(layerType[i], layerNeurons[i], numInputs, batchSize); // Create Softmax layer
 			}else{
-				layers[i] = new DropConnectLayer(layerType[i], layerNeurons[i], numInputs);
+				layers[i] = new DropConnectLayer(layerType[i], layerNeurons[i], numInputs, batchSize);
 			}
 		}
 	}
@@ -75,7 +75,7 @@ public class DropConnectNeuralNet extends NeuralNet
 					{
 						if(labels.get(i, j) == 1.0) 
 						{
-							if(output.get(i, j) == max)
+							if(output.get(i, j) == max && max > 1.0/(double)labels.getCols()) // Not all the same value
 							{
 								numCorrect++;
 								break;
